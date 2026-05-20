@@ -67,8 +67,7 @@ public class FileController{
         }
 		File dest = new File(upload.getAbsolutePath()+"/"+fileName);
 		file.transferTo(dest);
-		FileUtils.copyFile(dest, new File("D:/0javaproject/code/springboot/src/main/resources/static/upload"+"/"+fileName));
-		FileUtils.copyFile(dest, new File("D:/0javaproject/code/springboot/src/main/resources/static/upload"+"/"+fileName));
+		copyToSourceUploadDirectory(dest, fileName);
 		/**
   		 * 如果使用idea或者eclipse重启项目，发现之前上传的图片或者文件丢失，将下面一行代码注释打开
    		 * 请将以下的"D:\\springbootq33sd\\src\\main\\resources\\static\\upload"替换成你本地项目的upload路径，
@@ -87,6 +86,25 @@ public class FileController{
 			configService.insertOrUpdate(configEntity);
 		}
 		return R.ok().put("file", fileName);
+	}
+
+	private void copyToSourceUploadDirectory(File sourceFile, String fileName) {
+		try {
+			File projectRoot = new File(System.getProperty("user.dir"));
+			if(!"springboot".equals(projectRoot.getName()) && new File(projectRoot, "springboot").exists()) {
+				projectRoot = new File(projectRoot, "springboot");
+			}
+			File sourceUpload = new File(projectRoot, "src/main/resources/static/upload");
+			if(!sourceUpload.exists()) {
+				sourceUpload.mkdirs();
+			}
+			File targetFile = new File(sourceUpload, fileName);
+			if(!sourceFile.getCanonicalPath().equals(targetFile.getCanonicalPath())) {
+				FileUtils.copyFile(sourceFile, targetFile);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
