@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+target/
+*/dist/
+*/build/
+*/target/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Runtime/temp files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+
+# Packaged dependency archives and exported bundles
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# Java packaged artifacts
+*.jar
+*.war
+*.ear
+
+# Test/coverage outputs
+coverage/
+.nyc_output/
