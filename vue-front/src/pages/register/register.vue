@@ -36,17 +36,6 @@
 				<div v-if="true" :style='{"padding":"0 10px 0 0","color":"#fff","textAlign":"right","display":"inline-block","width":"120px","lineHeight":"44px","fontSize":"14px"}' :class="changeRules('shouji')?'required':''">手机：</div>
 				<el-input v-model="registerForm.shouji"  placeholder="请输入手机" />
 			</el-form-item>
-			<el-form-item :style='{"width":"100%","padding":"0","margin":"0 auto 20px","height":"auto"}' v-if="tableName=='yonghu'" prop="touxiang">
-				<div v-if="true" :style='{"padding":"0 10px 0 0","color":"#fff","textAlign":"right","display":"inline-block","width":"120px","lineHeight":"44px","fontSize":"14px"}' :class="changeRules('touxiang')?'required':''">头像：</div>
-                <file-upload
-					tip="点击上传头像"
-					action="file/upload"
-					:limit="1"
-					:multiple="true"
-					:fileUrls="registerForm.touxiang?registerForm.touxiang:''"
-					@change="yonghutouxiangUploadChange"
-				></file-upload>
-			</el-form-item>
 			<el-form-item :style='{"width":"100%","padding":"0","margin":"0 auto 20px","height":"auto"}' v-if="tableName=='yonghu'" prop="dizhi">
 				<div v-if="true" :style='{"padding":"0 10px 0 0","color":"#fff","textAlign":"right","display":"inline-block","width":"120px","lineHeight":"44px","fontSize":"14px"}' :class="changeRules('dizhi')?'required':''">地址：</div>
 				<el-input v-model="registerForm.dizhi"  placeholder="请输入地址" />
@@ -88,17 +77,6 @@
                       :value="item">
                   </el-option>
                 </el-select>
-			</el-form-item>
-			<el-form-item :style='{"width":"100%","padding":"0","margin":"0 auto 20px","height":"auto"}' v-if="tableName=='peisongyuan'" prop="touxiang">
-				<div v-if="true" :style='{"padding":"0 10px 0 0","color":"#fff","textAlign":"right","display":"inline-block","width":"120px","lineHeight":"44px","fontSize":"14px"}' :class="changeRules('touxiang')?'required':''">头像：</div>
-                <file-upload
-					tip="点击上传头像"
-					action="file/upload"
-					:limit="1"
-					:multiple="true"
-					:fileUrls="registerForm.touxiang?registerForm.touxiang:''"
-					@change="peisongyuantouxiangUploadChange"
-				></file-upload>
 			</el-form-item>
 			<el-form-item :style='{"width":"100%","padding":"0","margin":"0 auto 20px","height":"auto"}' v-if="tableName=='peisongyuan'" prop="lianxidianhua">
 				<div v-if="true" :style='{"padding":"0 10px 0 0","color":"#fff","textAlign":"right","display":"inline-block","width":"120px","lineHeight":"44px","fontSize":"14px"}' :class="changeRules('lianxidianhua')?'required':''">联系电话：</div>
@@ -144,7 +122,7 @@ export default {
 					mima2: '',
 					xingbie: '',
 					shouji: '',
-					touxiang: '',
+					touxiang: 'upload/yonghu_touxiang1.jpg',
 					dizhi: '',
 					shenfen: '',
 				}
@@ -156,7 +134,7 @@ export default {
 					mima2: '',
 					peisongren: '',
 					xingbie: '',
-					touxiang: '',
+					touxiang: 'upload/peisongyuan_touxiang1.jpg',
 					lianxidianhua: '',
 				}
 			}
