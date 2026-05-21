@@ -34,6 +34,7 @@ import com.service.DaiqupingjiaService;
 import com.service.TokenService;
 import com.utils.PageUtils;
 import com.utils.R;
+import com.utils.RiskUtils;
 import com.utils.MPUtil;
 import com.utils.MapUtils;
 import com.utils.CommonUtil;
@@ -142,6 +143,9 @@ public class DaiqupingjiaController {
     @RequestMapping("/save")
     public R save(@RequestBody DaiqupingjiaEntity daiqupingjia, HttpServletRequest request){
     	//ValidatorUtils.validateEntity(daiqupingjia);
+        if(!RiskUtils.check(daiqupingjia.getPingjia()).isPass()) {
+            return R.error("AI风险识别未通过：评价内容包含高风险词，请修改后再提交");
+        }
         daiqupingjiaService.insert(daiqupingjia);
         return R.ok();
     }
@@ -152,6 +156,9 @@ public class DaiqupingjiaController {
     @RequestMapping("/add")
     public R add(@RequestBody DaiqupingjiaEntity daiqupingjia, HttpServletRequest request){
     	//ValidatorUtils.validateEntity(daiqupingjia);
+        if(!RiskUtils.check(daiqupingjia.getPingjia()).isPass()) {
+            return R.error("AI风险识别未通过：评价内容包含高风险词，请修改后再提交");
+        }
         daiqupingjiaService.insert(daiqupingjia);
         return R.ok();
     }
@@ -167,6 +174,9 @@ public class DaiqupingjiaController {
     @Transactional
     public R update(@RequestBody DaiqupingjiaEntity daiqupingjia, HttpServletRequest request){
         //ValidatorUtils.validateEntity(daiqupingjia);
+        if(!RiskUtils.check(daiqupingjia.getPingjia()).isPass()) {
+            return R.error("AI风险识别未通过：评价内容包含高风险词，请修改后再提交");
+        }
         daiqupingjiaService.updateById(daiqupingjia);//全部更新
         return R.ok();
     }

@@ -139,22 +139,42 @@
                     this.form.content = this.form.content.replace(reg,"**");
                 }
             }
-            this.$http.post('messages/add', this.form).then(res => {
-              if (res.data.code == 0) {
-                this.$message({
-                  type: 'success',
-                  message: '留言成功!',
-                  duration: 1500,
-                  onClose: () => {
-                    this.form.content = '';
-                    this.getInfo(1);
-                  }
-                });
+            this.checkRisk(this.form.content, 'message').then(pass => {
+              if (!pass) {
+                return;
               }
+              this.$http.post('messages/add', this.form).then(res => {
+                if (res.data.code == 0) {
+                  this.$message({
+                    type: 'success',
+                    message: '留言成功!',
+                    duration: 1500,
+                    onClose: () => {
+                      this.form.content = '';
+                      this.getInfo(1);
+                    }
+                  });
+                }
+              });
             });
           } else {
             return false;
           }
+        });
+      },
+      checkRisk(content, scene) {
+        return this.$http.post('risk/check', {content, scene}).then(res => {
+          if (res.data.code == 0 && res.data.pass === false) {
+            this.$message.error(res.data.suggestion || '内容存在风险，请修改后再提交');
+            return false;
+          }
+          if (res.data.code == 0 && res.data.riskLevel === 'medium') {
+            this.$message.warning('AI提示：内容存在中等风险，请确认表达是否合适');
+          }
+          return true;
+        }).catch(() => {
+          this.$message.warning('AI风险识别暂不可用，已按普通流程提交');
+          return true;
         });
       },
       resetForm(formName) {

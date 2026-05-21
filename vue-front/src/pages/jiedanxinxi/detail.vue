@@ -240,8 +240,30 @@
       <el-tabs class="detail"
                :style='{"border":"0","boxShadow":"none","margin":"40px 0 0","background":"#fff","flex":"1","width":"calc(100% - 260px)","order":"4"}'
                v-model="activeName" type="border-card">
-        <el-tab-pane label="路线规划" name="first">
-          <div v-html="detail.luxianguihua"></div>
+        <el-tab-pane label="路线规划与实时位置" name="first">
+          <div class="delivery-map">
+            <div class="map-actions">
+              <el-button type="primary" size="small" @click="planRoute">生成路线</el-button>
+              <el-button type="success" size="small" @click="openNavigation" :disabled="!routeInfo.amapUrl">开始导航</el-button>
+              <el-button type="warning" size="small" @click="reportLocation">上报当前位置</el-button>
+              <el-button size="small" @click="refreshLocation">刷新位置</el-button>
+            </div>
+            <div class="map-panel">
+              <div class="map-line"></div>
+              <div class="map-point pickup">取</div>
+              <div class="map-point destination">达</div>
+              <div v-if="locationInfo" class="map-point courier" :style="courierPointStyle">配</div>
+              <div v-if="!locationInfo" class="map-empty">暂无配送员实时位置</div>
+            </div>
+            <div class="map-summary">
+              <p>取货地址：{{ detail.quhuodizhi || '未填写' }}</p>
+              <p>目的地址：{{ detail.mudedizhi || '未填写' }}</p>
+              <p v-if="routeInfo.distanceMeters">预计距离：{{ routeInfo.distanceMeters }} 米，预计 {{ routeInfo.durationMinutes }} 分钟</p>
+              <p v-if="locationInfo">配送员坐标：{{ locationInfo.latitude }}, {{ locationInfo.longitude }}，更新时间：{{ locationInfo.updateTime }}</p>
+              <p v-if="mapMessage">{{ mapMessage }}</p>
+            </div>
+            <div v-if="detail.luxianguihua" class="legacy-route" v-html="detail.luxianguihua"></div>
+          </div>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -280,6 +302,11 @@ export default {
       centerType: false,
       shareUrl: location.href,
       swiperBigUrl: null,
+      routeInfo: {},
+      locationInfo: null,
+      locationTrack: [],
+      mapMessage: '',
+      trackingTimer: null,
     }
   },
   created() {
@@ -290,6 +317,24 @@ export default {
     this.init();
   },
   mounted() {
+  },
+  beforeDestroy() {
+    if (this.trackingTimer) {
+      clearInterval(this.trackingTimer);
+    }
+  },
+  computed: {
+    courierPointStyle() {
+      if (!this.locationInfo) {
+        return {};
+      }
+      const lat = Number(this.locationInfo.latitude || 0);
+      const lng = Number(this.locationInfo.longitude || 0);
+      return {
+        left: (25 + Math.abs(lng * 10000) % 50) + '%',
+        top: (25 + Math.abs(lat * 10000) % 45) + '%'
+      }
+    }
   },
   //方法集合
   methods: {
@@ -305,6 +350,8 @@ export default {
           this.title = this.detail.kuaidimingcheng;
           this.detailBanner = this.detail.jietu ? this.detail.jietu.split(",") : [];
           this.$forceUpdate();
+          this.planRoute();
+          this.refreshLocation();
 
           // 否
 
@@ -315,6 +362,78 @@ export default {
           } else {
             this.swiperBigUrl = this.baseUrl + this.detailBanner[0]
           }
+        }
+      });
+    },
+    planRoute() {
+      if (!this.detail || !this.detail.dingdanhao) {
+        return;
+      }
+      this.$http.post('navigation/plan', {
+        orderId: this.detail.dingdanhao,
+        pickupAddress: this.detail.quhuodizhi,
+        destinationAddress: this.detail.mudedizhi
+      }).then(res => {
+        if (res.data.code == 0) {
+          this.routeInfo = res.data;
+          this.mapMessage = '路线规划已生成';
+        } else {
+          this.mapMessage = res.data.msg || '路线规划失败';
+        }
+      });
+    },
+    openNavigation() {
+      if (this.routeInfo && this.routeInfo.amapUrl) {
+        window.open(this.routeInfo.amapUrl, '_blank');
+      }
+    },
+    reportLocation() {
+      if (!this.detail || !this.detail.dingdanhao) {
+        this.$message.error('订单信息不完整');
+        return;
+      }
+      if (!navigator.geolocation) {
+        this.$message.error('当前浏览器不支持定位');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(position => {
+        const payload = {
+          orderId: this.detail.dingdanhao,
+          peisongzhanghao: this.detail.peisongzhanghao || localStorage.getItem('username'),
+          peisongren: this.detail.peisongren || localStorage.getItem('frontName') || localStorage.getItem('username'),
+          latitude: Number(position.coords.latitude.toFixed(6)),
+          longitude: Number(position.coords.longitude.toFixed(6))
+        };
+        this.$http.post('location/report', payload).then(res => {
+          if (res.data.code == 0) {
+            this.locationInfo = res.data.data;
+            this.mapMessage = '当前位置已上报';
+            this.$message.success('位置上报成功');
+          } else {
+            this.$message.error(res.data.msg || '位置上报失败');
+          }
+        });
+      }, () => {
+        this.$message.error('定位失败，请确认浏览器定位权限已开启');
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000
+      });
+    },
+    refreshLocation() {
+      if (!this.detail || !this.detail.dingdanhao) {
+        return;
+      }
+      this.$http.get('location/current', {params: {orderId: this.detail.dingdanhao}}).then(res => {
+        if (res.data.code == 0) {
+          this.locationInfo = res.data.data;
+          this.mapMessage = this.locationInfo ? '实时位置已刷新' : '暂无配送员实时位置';
+        }
+      });
+      this.$http.get('location/track', {params: {orderId: this.detail.dingdanhao}}).then(res => {
+        if (res.data.code == 0) {
+          this.locationTrack = res.data.data || [];
         }
       });
     },
@@ -942,5 +1061,92 @@ export default {
   font-size: 18px;
   position: relative;
   transition: .3s;
+}
+
+.delivery-map {
+  padding: 12px;
+  color: #333;
+}
+
+.map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.map-panel {
+  position: relative;
+  width: 100%;
+  min-height: 260px;
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+  background:
+    linear-gradient(90deg, rgba(64, 158, 255, .08) 1px, transparent 1px),
+    linear-gradient(rgba(64, 158, 255, .08) 1px, transparent 1px),
+    #f7fbff;
+  background-size: 36px 36px;
+}
+
+.map-line {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 50%;
+  height: 4px;
+  background: #409eff;
+  transform: rotate(-8deg);
+  transform-origin: center;
+}
+
+.map-point {
+  position: absolute;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #fff;
+  text-align: center;
+  line-height: 36px;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .18);
+}
+
+.pickup {
+  left: 12%;
+  top: 58%;
+  background: #67c23a;
+}
+
+.destination {
+  right: 12%;
+  top: 34%;
+  background: #f56c6c;
+}
+
+.courier {
+  background: #e6a23c;
+  transition: all .3s ease;
+}
+
+.map-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  color: #909399;
+  transform: translate(-50%, -50%);
+}
+
+.map-summary {
+  margin-top: 12px;
+  line-height: 1.8;
+}
+
+.map-summary p {
+  margin: 0;
+}
+
+.legacy-route {
+  margin-top: 12px;
 }
 </style>

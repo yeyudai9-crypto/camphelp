@@ -34,6 +34,7 @@ import com.service.MessagesService;
 import com.service.TokenService;
 import com.utils.PageUtils;
 import com.utils.R;
+import com.utils.RiskUtils;
 import com.utils.MPUtil;
 import com.utils.MapUtils;
 import com.utils.CommonUtil;
@@ -138,6 +139,9 @@ public class MessagesController {
     @RequestMapping("/save")
     public R save(@RequestBody MessagesEntity messages, HttpServletRequest request){
     	//ValidatorUtils.validateEntity(messages);
+        if(!RiskUtils.check(messages.getContent()).isPass()) {
+            return R.error("AI风险识别未通过：留言内容包含高风险词，请修改后再提交");
+        }
         messagesService.insert(messages);
         return R.ok();
     }
@@ -148,6 +152,9 @@ public class MessagesController {
     @RequestMapping("/add")
     public R add(@RequestBody MessagesEntity messages, HttpServletRequest request){
     	//ValidatorUtils.validateEntity(messages);
+        if(!RiskUtils.check(messages.getContent()).isPass()) {
+            return R.error("AI风险识别未通过：留言内容包含高风险词，请修改后再提交");
+        }
         messagesService.insert(messages);
         return R.ok();
     }
@@ -173,6 +180,9 @@ public class MessagesController {
     @IgnoreAuth
     public R update(@RequestBody MessagesEntity messages, HttpServletRequest request){
         //ValidatorUtils.validateEntity(messages);
+        if(!RiskUtils.check(messages.getContent()).isPass()) {
+            return R.error("AI风险识别未通过：留言内容包含高风险词，请修改后再提交");
+        }
         messagesService.updateById(messages);//全部更新
         return R.ok();
     }
