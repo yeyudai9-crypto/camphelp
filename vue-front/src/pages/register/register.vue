@@ -175,9 +175,6 @@ export default {
 			this.rules.mima = [{ required: true, message: '请输入密码', trigger: 'blur' }];
 		  }
 			this.yonghuxingbieOptions = "男,女".split(',');
-		  if ('yonghu' == this.tableName) {
-			this.rules.shouji = [{ required: true, validator: this.$validate.isMobile, trigger: 'blur' }];
-		  }
 			this.yonghushenfenOptions = "学生,老师".split(',');
 		  if ('yonghu' == this.tableName) {
 			this.rules.shenfen = [{ required: true, message: '请输入身份', trigger: 'blur' }];
@@ -192,9 +189,6 @@ export default {
 			this.rules.peisongren = [{ required: true, message: '请输入配送人', trigger: 'blur' }];
 		  }
 			this.peisongyuanxingbieOptions = "男,女".split(',');
-		  if ('peisongyuan' == this.tableName) {
-			this.rules.lianxidianhua = [{ required: true, validator: this.$validate.isMobile, trigger: 'blur' }];
-		  }
 		}
     },
     //方法集合
