@@ -4,7 +4,7 @@
 	<div class="container" :style='{"minHeight":"100vh","alignItems":"center","background":"url(http://codegen.caihongy.cn/20240118/7a90d739918844fd901258271df346a4.jpg)","display":"flex","width":"100%","backgroundSize":"cover","backgroundPosition":"center center","backgroundRepeat":"no-repeat","justifyContent":"center"}'>
 		<el-form class='rgs-form' v-if="pageFlag=='register'" :style='{"width":"600px","padding":"20px","margin":"0","position":"relative","borderRadius":"10px","height":"auto"}' ref="registerForm" :model="registerForm" :rules="rules">
 			<div v-if="false" :style='{"width":"100%","margin":"0 0 30px 0","lineHeight":"44px","fontSize":"30px","color":"#fff","textAlign":"center"}'>USER / REGISTER</div>
-			<div v-if="true" :style='{"width":"100%","margin":"0 0 30px","lineHeight":"44px","fontSize":"30px","color":"#fff","textAlign":"center"}'>基于SpringBoot校园快递代取系统注册</p></div>
+			<div v-if="true" :style='{"width":"100%","margin":"0 0 30px","lineHeight":"44px","fontSize":"30px","color":"#fff","textAlign":"center"}'>基于地理位置的校园代取系统注册</p></div>
 			<el-form-item :style='{"width":"100%","padding":"0","margin":"0 auto 20px","height":"auto"}' v-if="tableName=='yonghu'" prop="zhanghao">
 				<div v-if="true" :style='{"padding":"0 10px 0 0","color":"#fff","textAlign":"right","display":"inline-block","width":"120px","lineHeight":"44px","fontSize":"14px"}' :class="changeRules('zhanghao')?'required':''">账号：</div>
 				<el-input v-model="registerForm.zhanghao"  placeholder="请输入账号" />

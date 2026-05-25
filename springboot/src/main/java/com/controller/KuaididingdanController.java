@@ -42,7 +42,7 @@ import com.service.StoreupService;
 import com.entity.StoreupEntity;
 
 /**
- * 快递订单
+ * 代取订单
  * 后端接口
  * @author 
  * @email 
@@ -112,7 +112,7 @@ public class KuaididingdanController {
         EntityWrapper< KuaididingdanEntity> ew = new EntityWrapper< KuaididingdanEntity>();
  		ew.allEq(MPUtil.allEQMapPre( kuaididingdan, "kuaididingdan")); 
 		KuaididingdanView kuaididingdanView =  kuaididingdanService.selectView(ew);
-		return R.ok("查询快递订单成功").put("data", kuaididingdanView);
+		return R.ok("查询代取订单成功").put("data", kuaididingdanView);
     }
 	
     /**

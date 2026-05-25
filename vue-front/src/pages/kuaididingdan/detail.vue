@@ -201,7 +201,7 @@ export default {
       baseUrl: '',
       breadcrumbItem: [
         {
-          name: '快递订单'
+          name: '代取订单'
         }
       ],
       title: '',
@@ -450,7 +450,7 @@ export default {
     },
     // 删除
     delClick() {
-      this.$confirm('是否删除此快递订单？')
+      this.$confirm('是否删除此代取订单？')
           .then(_ => {
             this.$http.post('kuaididingdan/delete', [this.detail.id]).then(res => {
               if (res.data.code == 0) {

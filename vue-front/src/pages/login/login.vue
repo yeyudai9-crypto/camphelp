@@ -3,7 +3,7 @@
 	<div class="container" :style='{"minHeight":"100vh","alignItems":"center","background":"url(http://codegen.caihongy.cn/20240118/7a90d739918844fd901258271df346a4.jpg)","display":"flex","width":"100%","backgroundSize":"cover","backgroundPosition":"center center","backgroundRepeat":"no-repeat","justifyContent":"center"}'>
 		<el-form ref="loginForm" :model="loginForm" :style='{"width":"600px","padding":"40px 0","margin":"0","borderRadius":"10px","height":"auto"}' :rules="rules">
 			<div v-if="false" :style='{"width":"100%","margin":"0 0 40px 0","lineHeight":"44px","fontSize":"36px","color":"#fff","textAlign":"center"}'>USER / LOGIN</div>
-			<div v-if="true" :style='{"width":"100%","margin":"0 0 40px 0","lineHeight":"44px","fontSize":"30px","color":"#fff","textAlign":"center"}'>基于SpringBoot校园快递代取系统登录</div>
+			<div v-if="true" :style='{"width":"100%","margin":"0 0 40px 0","lineHeight":"44px","fontSize":"30px","color":"#fff","textAlign":"center"}'>基于地理位置的校园代取系统登录</div>
 			<el-form-item v-if="loginType==1" class="list-item" :style='{"width":"100%","margin":"0 auto 15px"}' prop="username">
 				<div v-if="false" :style='{"width":"64px","lineHeight":"44px","fontSize":"14px","color":"rgba(64, 158, 255, 1)"}'>账号：</div>
 				<input :style='{"border":"4px solid #FFFFFF","padding":"0 10px","boxShadow":"inset 0px 0px 16px 0px #332001","color":"#fff","outlineOffset":"4px","background":"transparent","width":"100%","fontSize":"14px","height":"54px"}' v-model="loginForm.username" placeholder="请输入账户">

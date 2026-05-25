@@ -52,7 +52,7 @@ export const routes = [{
     }
       ,{
 	path: '/kuaididingdan',
-        name: '快递订单',
+        name: '代取订单',
         component: kuaididingdan
       }
       ,{

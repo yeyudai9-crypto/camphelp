@@ -9,7 +9,7 @@ const base = {
     },
     getProjectName(){
         return {
-            projectName: "基于SpringBoot校园快递代取系统"
+            projectName: "基于地理位置的校园代取系统"
         } 
     }
 }

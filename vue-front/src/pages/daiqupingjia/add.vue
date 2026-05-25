@@ -323,8 +323,12 @@
 			var crossuserid;
 			var crossrefid;
 			var crossoptnum;
-			this.$refs["ruleForm"].validate(valid => {
+			this.$refs["ruleForm"].validate(async valid => {
 				if(valid) {
+					const riskPass = await this.checkRisk();
+					if (!riskPass) {
+						return;
+					}
 					if(this.type=='cross'){
 						var statusColumnName = localStorage.getItem('statusColumnName');
 						var statusColumnValue = localStorage.getItem('statusColumnValue');
@@ -422,6 +426,25 @@
 		back() {
 			this.$router.go(-1);
 		},
+      checkRisk() {
+        const content = this.ruleForm.pingjia || '';
+        if (!content) {
+          return Promise.resolve(true);
+        }
+        return this.$http.post('risk/check', {content, scene: 'review'}).then(res => {
+          if (res.data.code == 0 && res.data.pass === false) {
+            this.$message.error(res.data.suggestion || '评价内容存在风险，请修改后再提交');
+            return false;
+          }
+          if (res.data.code == 0 && res.data.riskLevel === 'medium') {
+            this.$message.warning('AI提示：评价内容存在中等风险，请确认表达是否合适');
+          }
+          return true;
+        }).catch(() => {
+          this.$message.warning('AI风险识别暂不可用，已按普通流程提交');
+          return true;
+        });
+      },
       jietuUploadChange(fileUrls) {
           this.ruleForm.jietu = fileUrls.replace(new RegExp(this.$config.baseUrl,"g"),"");;
       },

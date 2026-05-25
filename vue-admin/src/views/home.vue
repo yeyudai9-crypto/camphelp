@@ -11,7 +11,7 @@
 			</div>
 			<div :style='{"width":"calc(100% - 60px)","alignItems":"center","flexDirection":"column","justifyContent":"center","display":"flex"}'>
 				<div :style='{"margin":"5px 0","lineHeight":"24px","fontSize":"24px","color":"inherit","fontWeight":"bold","height":"24px"}'>{{kuaididingdanCount}}</div>
-				<div :style='{"margin":"5px 0","lineHeight":"24px","fontSize":"inherit","color":"inherit","height":"24px"}'>快递订单总数</div>
+				<div :style='{"margin":"5px 0","lineHeight":"24px","fontSize":"inherit","color":"inherit","height":"24px"}'>代取订单总数</div>
 			</div>
 		</div>
 		<div :style='{"boxShadow":"0 0px 0px rgba(0,0,0,.3)","margin":"0 10px 16px 0","borderRadius":"4px","background":"rgba(86,178,198,.6)","display":"flex","clipPath":"polygon(95% 0, 100% 50%, 95% 100%, 0% 100%, 0 50%, 0% 0)","width":"100%"}' v-if="isAuth('daiqupingjia','首页总数')">

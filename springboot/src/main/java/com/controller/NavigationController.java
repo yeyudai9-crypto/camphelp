@@ -31,6 +31,10 @@ public class NavigationController {
         Point pickup = resolvePoint(request.getPickupAddress(), request.getPickupLatitude(), request.getPickupLongitude(), 1);
         Point destination = resolvePoint(request.getDestinationAddress(), request.getDestinationLatitude(), request.getDestinationLongitude(), 2);
         double distance = distanceMeters(pickup.latitude, pickup.longitude, destination.latitude, destination.longitude);
+        if(distance < 30) {
+            destination = new Point(destination.latitude + 0.0026, destination.longitude + 0.0028);
+            distance = distanceMeters(pickup.latitude, pickup.longitude, destination.latitude, destination.longitude);
+        }
         int durationMinutes = Math.max(3, (int)Math.ceil(distance / 80.0));
 
         List<Map<String, Double>> routePoints = new ArrayList<Map<String, Double>>();
@@ -39,12 +43,12 @@ public class NavigationController {
         routePoints.add(pointMap(destination));
 
         String amapUrl = "https://uri.amap.com/navigation?from="
-                + pickup.longitude + "," + pickup.latitude + ",取货点&to="
-                + destination.longitude + "," + destination.latitude + ",目的地&mode=walk&policy=1&src=camphelp";
+                + pickup.longitude + "," + pickup.latitude + ",pickup&to="
+                + destination.longitude + "," + destination.latitude + ",destination&mode=walk&policy=1&src=camphelp";
         if(StringUtils.isNotBlank(request.getPickupAddress()) || StringUtils.isNotBlank(request.getDestinationAddress())) {
             amapUrl = "https://uri.amap.com/navigation?from="
-                    + pickup.longitude + "," + pickup.latitude + "," + encode(defaultText(request.getPickupAddress(), "取货点"))
-                    + "&to=" + destination.longitude + "," + destination.latitude + "," + encode(defaultText(request.getDestinationAddress(), "目的地"))
+                    + pickup.longitude + "," + pickup.latitude + "," + encode(defaultText(request.getPickupAddress(), "pickup"))
+                    + "&to=" + destination.longitude + "," + destination.latitude + "," + encode(defaultText(request.getDestinationAddress(), "destination"))
                     + "&mode=walk&policy=1&src=camphelp";
         }
 

@@ -3,7 +3,7 @@ export default {
 	name: '/springbootfa427577',
     indexNav: [
         {
-            name: '快递订单',
+            name: '代取订单',
             url: '/index/kuaididingdan'
         },
         {

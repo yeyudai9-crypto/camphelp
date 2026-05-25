@@ -108,7 +108,7 @@
 	</div>
 	
 	<div class="title" :style='{"width":"400px","margin":"-45px auto 20px","lineHeight":"54px","textAlign":"center"}'>
-	  <span :style='{"color":"#505050","fontSize":"36px"}'>快递订单展示</span>
+	  <span :style='{"color":"#505050","fontSize":"36px"}'>代取订单展示</span>
 	</div>
 	
 	

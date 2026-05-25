@@ -12,7 +12,7 @@ import com.entity.view.KuaididingdanView;
 
 
 /**
- * 快递订单
+ * 代取订单
  *
  * @author 
  * @email 

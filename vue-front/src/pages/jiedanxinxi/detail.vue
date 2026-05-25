@@ -242,27 +242,47 @@
                v-model="activeName" type="border-card">
         <el-tab-pane label="路线规划与实时位置" name="first">
           <div class="delivery-map">
-            <div class="map-actions">
-              <el-button type="primary" size="small" @click="planRoute">生成路线</el-button>
-              <el-button type="success" size="small" @click="openNavigation" :disabled="!routeInfo.amapUrl">开始导航</el-button>
-              <el-button type="warning" size="small" @click="reportLocation">上报当前位置</el-button>
-              <el-button size="small" @click="refreshLocation">刷新位置</el-button>
+            <div class="delivery-status">
+              <div>
+                <div class="eta" v-if="routeInfo.durationMinutes">{{ etaText }}</div>
+                <div class="eta" v-else>配送位置追踪</div>
+                <div class="status-title">{{ statusText }}</div>
+              </div>
+              <div class="map-actions">
+                <el-button type="primary" size="small" @click="planRoute">生成路线</el-button>
+                <el-button type="success" size="small" @click="openNavigation" :disabled="!routeInfo.amapUrl">高德导航</el-button>
+                <el-button type="warning" size="small" @click="reportLocation">上报当前位置</el-button>
+                <el-button size="small" @click="refreshLocation">刷新位置</el-button>
+              </div>
             </div>
-            <div class="map-panel">
-              <div class="map-line"></div>
-              <div class="map-point pickup">取</div>
-              <div class="map-point destination">达</div>
-              <div v-if="locationInfo" class="map-point courier" :style="courierPointStyle">配</div>
-              <div v-if="!locationInfo" class="map-empty">暂无配送员实时位置</div>
+            <div class="delivery-progress">
+              <span class="step active">￥</span>
+              <span class="bar active"></span>
+              <span class="step active">取</span>
+              <span class="bar active"></span>
+              <span class="step active">配</span>
+              <span class="bar"></span>
+              <span class="step">达</span>
+            </div>
+            <div class="map-stage">
+              <div ref="amapContainer" class="amap-container"></div>
+              <div v-if="mapLoadFailed" class="map-panel">
+                <div class="map-line"></div>
+                <div class="map-point pickup">取</div>
+                <div class="map-point destination">达</div>
+                <div v-if="locationInfo" class="map-point courier" :style="courierPointStyle">配</div>
+                <div v-if="!locationInfo" class="map-empty">暂无配送员实时位置</div>
+              </div>
+              <div class="distance-bubble" v-if="routeInfo.distanceMeters">
+                距您 <strong>{{ routeInfo.distanceMeters }}m</strong> · <strong>{{ routeInfo.durationMinutes }}分钟</strong>
+              </div>
             </div>
             <div class="map-summary">
               <p>取货地址：{{ detail.quhuodizhi || '未填写' }}</p>
               <p>目的地址：{{ detail.mudedizhi || '未填写' }}</p>
-              <p v-if="routeInfo.distanceMeters">预计距离：{{ routeInfo.distanceMeters }} 米，预计 {{ routeInfo.durationMinutes }} 分钟</p>
-              <p v-if="locationInfo">配送员坐标：{{ locationInfo.latitude }}, {{ locationInfo.longitude }}，更新时间：{{ locationInfo.updateTime }}</p>
+              <p v-if="locationInfo">配送员：{{ locationInfo.peisongren || detail.peisongren || '配送员' }}，更新时间：{{ locationInfo.updateTime }}</p>
               <p v-if="mapMessage">{{ mapMessage }}</p>
             </div>
-            <div v-if="detail.luxianguihua" class="legacy-route" v-html="detail.luxianguihua"></div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -307,6 +327,11 @@ export default {
       locationTrack: [],
       mapMessage: '',
       trackingTimer: null,
+      amapKey: '001d42eaa139dc53fd655e7c23c0187e',
+      amapMap: null,
+      amapMarkers: [],
+      amapPolyline: null,
+      mapLoadFailed: false,
     }
   },
   created() {
@@ -317,6 +342,7 @@ export default {
     this.init();
   },
   mounted() {
+    this.loadAmap();
   },
   beforeDestroy() {
     if (this.trackingTimer) {
@@ -334,12 +360,106 @@ export default {
         left: (25 + Math.abs(lng * 10000) % 50) + '%',
         top: (25 + Math.abs(lat * 10000) % 45) + '%'
       }
+    },
+    etaText() {
+      const minutes = Number(this.routeInfo.durationMinutes || 0);
+      if (!minutes) {
+        return '预计送达时间待计算';
+      }
+      const now = new Date();
+      const start = this.formatClock(now);
+      const end = this.formatClock(new Date(now.getTime() + minutes * 60000));
+      return `${start}-${end} 预计送达`;
+    },
+    statusText() {
+      if (this.locationInfo) {
+        return '配送员正在送货';
+      }
+      return this.detail.kuaidizhuangtai || '等待配送员上报位置';
     }
   },
   //方法集合
   methods: {
     swiperClick3(src) {
       this.swiperBigUrl = src
+    },
+    loadAmap() {
+      if (window.AMap) {
+        this.initAmap();
+        return;
+      }
+      const existing = document.getElementById('amap-js-sdk');
+      if (existing) {
+        existing.addEventListener('load', this.initAmap);
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'amap-js-sdk';
+      script.src = `https://webapi.amap.com/maps?v=1.4.15&key=${this.amapKey}`;
+      script.onload = this.initAmap;
+      script.onerror = () => {
+        this.mapLoadFailed = true;
+        this.mapMessage = '高德地图加载失败，已切换为演示地图';
+      };
+      document.head.appendChild(script);
+    },
+    initAmap() {
+      if (!window.AMap || !this.$refs.amapContainer || this.amapMap) {
+        return;
+      }
+      this.mapLoadFailed = false;
+      this.amapMap = new window.AMap.Map(this.$refs.amapContainer, {
+        zoom: 16,
+        resizeEnable: true,
+        center: [121.4737, 31.2304]
+      });
+      this.renderAmap();
+    },
+    renderAmap() {
+      if (!this.amapMap || !window.AMap) {
+        return;
+      }
+      this.amapMarkers.forEach(marker => marker.setMap(null));
+      this.amapMarkers = [];
+      if (this.amapPolyline) {
+        this.amapPolyline.setMap(null);
+        this.amapPolyline = null;
+      }
+      const points = [];
+      const addMarker = (point, label, color) => {
+        if (!point || !point.longitude || !point.latitude) {
+          return;
+        }
+        const position = [Number(point.longitude), Number(point.latitude)];
+        points.push(position);
+        const marker = new window.AMap.Marker({
+          map: this.amapMap,
+          position,
+          content: `<div class="amap-delivery-marker" style="background:${color}">${label}</div>`,
+          offset: new window.AMap.Pixel(-16, -16)
+        });
+        this.amapMarkers.push(marker);
+      };
+      addMarker(this.routeInfo.pickup, '取', '#67c23a');
+      if (this.locationInfo) {
+        addMarker(this.locationInfo, '配', '#f5c400');
+      }
+      addMarker(this.routeInfo.destination, '达', '#f56c6c');
+      if (points.length >= 2) {
+        this.amapPolyline = new window.AMap.Polyline({
+          map: this.amapMap,
+          path: points,
+          strokeColor: '#f5c400',
+          strokeWeight: 7,
+          strokeOpacity: 0.9
+        });
+        this.amapMap.setFitView(this.amapMarkers);
+      }
+    },
+    formatClock(date) {
+      const h = `${date.getHours()}`.padStart(2, '0');
+      const m = `${date.getMinutes()}`.padStart(2, '0');
+      return `${h}:${m}`;
     },
     init() {
       this.id = this.$route.query.id
@@ -352,6 +472,10 @@ export default {
           this.$forceUpdate();
           this.planRoute();
           this.refreshLocation();
+          if (this.trackingTimer) {
+            clearInterval(this.trackingTimer);
+          }
+          this.trackingTimer = setInterval(this.refreshLocation, 10000);
 
           // 否
 
@@ -376,7 +500,8 @@ export default {
       }).then(res => {
         if (res.data.code == 0) {
           this.routeInfo = res.data;
-          this.mapMessage = '路线规划已生成';
+          this.mapMessage = '路线规划已生成，已接入高德导航链接';
+          this.renderAmap();
         } else {
           this.mapMessage = res.data.msg || '路线规划失败';
         }
@@ -408,6 +533,7 @@ export default {
           if (res.data.code == 0) {
             this.locationInfo = res.data.data;
             this.mapMessage = '当前位置已上报';
+            this.renderAmap();
             this.$message.success('位置上报成功');
           } else {
             this.$message.error(res.data.msg || '位置上报失败');
@@ -429,6 +555,7 @@ export default {
         if (res.data.code == 0) {
           this.locationInfo = res.data.data;
           this.mapMessage = this.locationInfo ? '实时位置已刷新' : '暂无配送员实时位置';
+          this.renderAmap();
         }
       });
       this.$http.get('location/track', {params: {orderId: this.detail.dingdanhao}}).then(res => {
@@ -1064,8 +1191,30 @@ export default {
 }
 
 .delivery-map {
-  padding: 12px;
+  padding: 16px;
   color: #333;
+}
+
+.delivery-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eta {
+  color: #1f1f1f;
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.status-title {
+  margin-top: 8px;
+  color: #1f1f1f;
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 700;
 }
 
 .map-actions {
@@ -1075,17 +1224,66 @@ export default {
   margin-bottom: 12px;
 }
 
-.map-panel {
+.delivery-progress {
+  display: grid;
+  grid-template-columns: 42px 1fr 42px 1fr 42px 1fr 42px;
+  align-items: center;
+  margin: 18px 0 20px;
+}
+
+.delivery-progress .step {
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #777;
+  background: #e8e8e8;
+  font-weight: 800;
+}
+
+.delivery-progress .step.active {
+  color: #111;
+  background: #f5c400;
+}
+
+.delivery-progress .bar {
+  height: 8px;
+  background: #e8e8e8;
+}
+
+.delivery-progress .bar.active {
+  background: #f5c400;
+}
+
+.map-stage {
   position: relative;
-  width: 100%;
-  min-height: 260px;
   overflow: hidden;
-  border: 1px solid #dcdfe6;
+  min-height: 360px;
+  border-radius: 8px;
+  background: #fff8cf;
+}
+
+.amap-container {
+  width: 100%;
+  height: 360px;
+  min-height: 360px;
+}
+
+.map-panel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 360px;
+  overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(64, 158, 255, .08) 1px, transparent 1px),
-    linear-gradient(rgba(64, 158, 255, .08) 1px, transparent 1px),
-    #f7fbff;
-  background-size: 36px 36px;
+    linear-gradient(35deg, transparent 45%, rgba(255,255,255,.9) 45%, rgba(255,255,255,.9) 48%, transparent 48%),
+    linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px),
+    #fff4af;
+  background-size: 150px 150px, 56px 56px, 56px 56px;
 }
 
 .map-line {
@@ -1125,8 +1323,28 @@ export default {
 }
 
 .courier {
-  background: #e6a23c;
+  color: #111;
+  background: #f5c400;
   transition: all .3s ease;
+}
+
+.distance-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  z-index: 4;
+  padding: 14px 22px;
+  border-radius: 8px;
+  color: #1f1f1f;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.distance-bubble strong {
+  color: #f08a00;
 }
 
 .map-empty {
@@ -1148,5 +1366,31 @@ export default {
 
 .legacy-route {
   margin-top: 12px;
+}
+
+.delivery-map ::v-deep .amap-delivery-marker {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  color: #111;
+  line-height: 32px;
+  text-align: center;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+}
+
+@media (max-width: 768px) {
+  .delivery-status {
+    display: block;
+  }
+
+  .eta {
+    font-size: 28px;
+  }
+
+  .map-actions {
+    margin-top: 12px;
+  }
 }
 </style>
