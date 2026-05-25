@@ -91,6 +91,10 @@ export default {
 		        this.roles.push(this.roleMenus[item]);
 		    }
 		}
+		if (this.roles.length) {
+			this.role = this.roles[0].roleName;
+			this.loginForm.tableName = this.roles[0].tableName;
+		}
 		
 	},
 	mounted() {
@@ -134,6 +138,7 @@ export default {
 		},
       getCurrentRow(row) {
         this.role = row.roleName;
+        this.loginForm.tableName = row.tableName;
       },
       submitForm(formName) {
         if (this.roles.length!=1) {
@@ -172,6 +177,8 @@ export default {
 		      } else {
 		        this.$message.error(res.data.msg);
 		      }
+		    }).catch(() => {
+		      this.$message.error('后端服务未启动或连接失败，请先启动 Spring Boot 服务');
 		    });
 		  } else {
 		    return false;

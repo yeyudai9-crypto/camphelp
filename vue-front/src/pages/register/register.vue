@@ -163,6 +163,7 @@ export default {
 	},
     created() {
 		this.pageFlag = this.$route.query.pageFlag;
+		this.tableName = this.$route.query.role;
 		if(this.$route.query.pageFlag=='register'){
 		  if ('yonghu' == this.tableName) {
 			this.rules.zhanghao = [{ required: true, message: '请输入账号', trigger: 'blur' }];
@@ -280,6 +281,8 @@ export default {
               } else {
                 this.$message.error(res.data.msg);
               }
+            }).catch(() => {
+              this.$message.error('后端服务未启动或连接失败，请先启动 Spring Boot 服务');
             });
           } else {
             return false;
